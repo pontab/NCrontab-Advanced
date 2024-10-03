@@ -4,7 +4,7 @@
     <Version>1.2.3.3</Version>
     <FileVersion>1.2.3.3</FileVersion>
     <Company>Joe Coutcher</Company>
-    <TargetFrameworks>netstandard1.0;net46;net451;net45;net40;net35</TargetFrameworks>
+    <TargetFrameworks>netstandard1.0</TargetFrameworks>
     <AssemblyName>NCrontab.Advanced</AssemblyName>
     <PackageId>NCrontab.Advanced</PackageId>
     <Product>NCrontab.Advanced</Product>

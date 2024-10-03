@@ -13,6 +13,7 @@ namespace NCrontab.Advanced
     {
         public Dictionary<CrontabFieldKind, List<ICronFilter>> Filters { get; set; }
         public CronStringFormat Format { get; set; }
+        public DateTime? StartDate { get; set; } = null;
 
         // In the event a developer creates their own instance
         public CrontabSchedule()
@@ -174,7 +175,8 @@ namespace NCrontab.Advanced
 
         public bool IsMatch(DateTime value, CrontabFieldKind kind)
         {
-            return Filters.Where(x => x.Key == kind).SelectMany(x => x.Value).Any(filter => filter.IsMatch(value));
+            var result = Filters.Where(x => x.Key == kind).SelectMany(x => x.Value).Any(filter => filter.IsMatch(value));
+            return result;
         }
 
         private void JoinFilters(List<string> paramList, CrontabFieldKind kind)
@@ -190,12 +192,13 @@ namespace NCrontab.Advanced
 
         #region Static Methods
 
-        public static CrontabSchedule Parse(string expression, CronStringFormat format = CronStringFormat.Default)
+        public static CrontabSchedule Parse(string expression, CronStringFormat format = CronStringFormat.Default, DateTime? start = null)
         {
             return new CrontabSchedule
             {
                 Format = format,
-                Filters = ParseToDictionary(expression, format)
+                StartDate = start,
+                Filters = ParseToDictionary(expression, format, start)
             };
         }
 
@@ -232,7 +235,7 @@ namespace NCrontab.Advanced
                 ).ToList();
         }
 
-        private static Dictionary<CrontabFieldKind, List<ICronFilter>> ParseToDictionary(string cron, CronStringFormat format)
+        private static Dictionary<CrontabFieldKind, List<ICronFilter>> ParseToDictionary(string cron, CronStringFormat format, DateTime? start = null)
         {
             if (cron.IsNullOrWhiteSpace())
                 throw new CrontabException("The provided cron string is null, empty or contains only whitespace");
@@ -257,7 +260,7 @@ namespace NCrontab.Advanced
             fields.Add(CrontabFieldKind.Minute, ParseField(instructions[defaultFieldOffset + 0], CrontabFieldKind.Minute));
             fields.Add(CrontabFieldKind.Hour, ParseField(instructions[defaultFieldOffset + 1], CrontabFieldKind.Hour));
             fields.Add(CrontabFieldKind.Day, ParseField(instructions[defaultFieldOffset + 2], CrontabFieldKind.Day));
-            fields.Add(CrontabFieldKind.Month, ParseField(instructions[defaultFieldOffset + 3], CrontabFieldKind.Month));
+            fields.Add(CrontabFieldKind.Month, ParseField(instructions[defaultFieldOffset + 3], CrontabFieldKind.Month, start.HasValue ? start.Value.Month : 0));
             fields.Add(CrontabFieldKind.DayOfWeek, ParseField(instructions[defaultFieldOffset + 4], CrontabFieldKind.DayOfWeek));
 
             if (format == CronStringFormat.WithYears || format == CronStringFormat.WithSecondsAndYears)
@@ -268,11 +271,12 @@ namespace NCrontab.Advanced
             return fields;
         }
 
-        private static List<ICronFilter> ParseField(string field, CrontabFieldKind kind)
+        private static List<ICronFilter> ParseField(string field, CrontabFieldKind kind, int start = 0)
         {
             try
             {
-                return field.Split(',').Select(filter => ParseFilter(filter, kind)).ToList();
+                
+                return field.Split(',').Select(filter => ParseFilter(filter, kind, start)).ToList();
             }
             catch (Exception e)
             {
@@ -280,7 +284,7 @@ namespace NCrontab.Advanced
             }
         }
 
-        private static ICronFilter ParseFilter(string filter, CrontabFieldKind kind)
+        private static ICronFilter ParseFilter(string filter, CrontabFieldKind kind, int start = 0)
         {
             var newFilter = filter.ToUpper();
 
@@ -293,7 +297,7 @@ namespace NCrontab.Advanced
                     {
                         newFilter = newFilter.Substring(1);
                         var steps = GetValue(ref newFilter, kind);
-                        return new StepFilter(0, steps, kind);
+                        return new StepFilter(start, steps, kind);
                     }
                     return new AnyFilter(kind);
                 }

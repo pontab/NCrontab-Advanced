@@ -58,11 +58,10 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\NCrontab.Advanced\NCrontab.Advanced.csproj">
-      <Project>{D56BC51A-E8F9-4911-8C4C-EAB2763699CD}</Project>
+      <Project>{d56bc51a-e8f9-4911-8c4c-eab2763699cd}</Project>
       <Name>NCrontab.Advanced</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
       <ItemGroup>
